@@ -15,7 +15,7 @@ set -euo pipefail  # Modo strict: para na primeira falha
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly LOG_FILE="/tmp/${SCRIPT_NAME}_$(date +%Y%m%d_%H%M%S).log"
 readonly BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
-readonly DOTFILES_REPO="https://github.com/seu-usuario/dotfiles.git"  # Ajuste conforme necessário
+readonly DOTFILES_REPO="https://github.com/alucod3/dotfiles.git"  # Ajuste conforme necessário
 
 # Cores para output
 readonly RED='\033[0;31m'
