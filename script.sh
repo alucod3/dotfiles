@@ -285,6 +285,12 @@ setup_neovim() {
 
 setup_git_config() {
     if ! command_exists "git"; then
+        log "INFO" "Git não está instalado, pulando configuração"
+        return 0
+    fi
+
+    if ! confirm "Deseja configurar Git?"; then
+        log "INFO" "Pulando configuração do Git"
         return 0
     fi
     
