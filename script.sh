@@ -34,7 +34,12 @@ readonly ESSENTIAL_PACKAGES=(
 readonly TERMINAL_UTILITIES=(
     "ranger" "fzf" "lsd" "ripgrep" 
     "fd" "httpie" "whois" "duf" 
-    "lazygit"
+    "lazygit" "zoxide"
+)
+
+readonly I3_CONFIG=(
+    "i3"
+    "redshift" "feh" "flameshot"
 )
 
 readonly DEVELOPMENT_PACKAGES=(
@@ -44,12 +49,12 @@ readonly DEVELOPMENT_PACKAGES=(
 )
 
 readonly FONT_PACKAGES=(
-    "nerd-fonts"
+    "ttf-jetbrains-mono-nerd"
+    "ttf-firacode-nerd"
 )
 
 readonly GUI_APPLICATIONS=(
-    "ghostty"
-    "bitwarden"
+    "bitwarden" "kitty"
 )
 
 # =============================================================================
@@ -138,43 +143,6 @@ install_packages() {
     fi
 }
 
-# Função para configurar aliases de forma segura
-setup_aliases() {
-    local shell_configs=("$HOME/.bashrc" "$HOME/.zshrc")
-    
-    if ! confirm "Deseja configurar aliases aprimorados (ls -> lsd, cat -> bat, etc.)?"; then
-        return 0
-    fi
-    
-    local aliases=(
-        "alias ls='lsd --group-dirs=first'"
-        "alias ll='lsd -la --group-dirs=first'"
-        "alias la='lsd -a --group-dirs=first'"
-        "alias cat='bat --paging=never'"
-        "alias grep='rg'"
-        "alias find='fd'"
-        "alias cd='z'"  # Para zoxide
-    )
-    
-    for config in "${shell_configs[@]}"; do
-        if [[ -f "$config" ]]; then
-            backup_file "$config"
-            
-            # Verificar se já existe seção de aliases
-            if ! grep -q "# Enhanced aliases" "$config" 2>/dev/null; then
-                {
-                    echo ""
-                    echo "# Enhanced aliases - Added by dotfiles installer"
-                    printf '%s\n' "${aliases[@]}"
-                } >> "$config"
-                log "INFO" "Aliases adicionados a $config"
-            else
-                log "DEBUG" "Aliases já configurados em $config"
-            fi
-        fi
-    done
-}
-
 # =============================================================================
 # FUNÇÕES DE INSTALAÇÃO
 # =============================================================================
@@ -198,7 +166,6 @@ install_terminal_utilities() {
     if confirm "Deseja instalar utilitários de terminal (ranger, fzf, lsd, etc.)?"; then
         log "INFO" "Instalando utilitários de terminal..."
         install_packages "${TERMINAL_UTILITIES[@]}"
-        setup_aliases
     fi
 }
 
@@ -222,6 +189,13 @@ install_development_packages() {
     fi
 }
 
+install_i3() {
+    if confirm "Deseja instalar i3?"; then
+        log "INFO" "Instalando i3 e auxiliares..."
+        install_packages "${I3_CONFIG[@]}"
+    fi
+}
+
 install_fonts() {
     if confirm "Deseja instalar fontes Nerd Fonts?"; then
         log "INFO" "Instalando fontes..."
@@ -230,7 +204,7 @@ install_fonts() {
 }
 
 install_gui_applications() {
-    if confirm "Deseja instalar aplicações GUI (Ghostty, Bitwarden)?"; then
+    if confirm "Deseja instalar aplicações GUI (Kitty, Bitwarden...)?"; then
         log "INFO" "Instalando aplicações GUI..."
         install_packages "${GUI_APPLICATIONS[@]}"
     fi
@@ -309,50 +283,6 @@ setup_neovim() {
     fi
 }
 
-setup_dotfiles() {
-    if ! confirm "Deseja configurar dotfiles personalizados?"; then
-        return 0
-    fi
-    
-    log "INFO" "Configurando dotfiles..."
-    
-    local temp_dir="/tmp/dotfiles_$$"
-    
-    # Clonar repositório de dotfiles
-    if [[ -n "${DOTFILES_REPO:-}" ]]; then
-        if git clone "$DOTFILES_REPO" "$temp_dir"; then
-            log "INFO" "Repositório de dotfiles clonado"
-        else
-            log "ERROR" "Falha ao clonar repositório de dotfiles"
-            return 1
-        fi
-    else
-        log "WARN" "URL do repositório de dotfiles não configurada"
-        return 0
-    fi
-    
-    # Copiar configurações
-    if [[ -d "$temp_dir/.config" ]]; then
-        mkdir -p "$HOME/.config"
-        cp -r "$temp_dir/.config/"* "$HOME/.config/"
-        log "INFO" "Configurações copiadas para ~/.config"
-    fi
-    
-    # Configurar links simbólicos para dotfiles na home
-    local dotfiles=("gemrc" "gitconfig" "gitignore" "zshrc")
-    
-    for dotfile in "${dotfiles[@]}"; do
-        if [[ -f "$temp_dir/$dotfile" ]]; then
-            backup_file "$HOME/.$dotfile"
-            ln -sf "$temp_dir/$dotfile" "$HOME/.$dotfile"
-            log "INFO" "Link simbólico criado: ~/.$dotfile"
-        fi
-    done
-    
-    # Limpeza
-    rm -rf "$temp_dir"
-}
-
 setup_git_config() {
     if ! command_exists "git"; then
         return 0
@@ -397,11 +327,8 @@ cleanup() {
     log "INFO" "Executando limpeza..."
     
     # Limpar pacman cache
-    if confirm "Deseja limpar cache do pacman?"; then
-        sudo pacman -Scc --noconfirm
-        log "INFO" "Cache do pacman limpo"
-    fi
-    
+    sudo pacman -Scc --noconfirm
+    log "INFO" "Cache do pacman limpo"  
     log "INFO" "Log salvo em: $LOG_FILE"
     
     if [[ -d "$BACKUP_DIR" ]]; then
@@ -423,6 +350,14 @@ show_summary() {
     if is_package_installed "docker" && ! groups "$USER" | grep -q docker; then
         log "WARN" "Para usar Docker sem sudo, faça logout e login novamente"
     fi
+}
+
+# =============================================================================
+# PARTE PARA COPIAR OS .CONFIG PARA O SISTEMA (ALTERAR AQUI)
+# =============================================================================
+moving_config() {
+    log "INFO" "Instalando .config"
+    mv ./config/* ~/.config/
 }
 
 main() {
@@ -452,6 +387,7 @@ main() {
     setup_neovim
     setup_dotfiles
     setup_git_config
+    moving_config
     
     show_summary
     
