@@ -352,8 +352,11 @@ setup_dotfiles() {
                 local basename_item=$(basename "$item")
                 local target="$HOME/.config/$basename_item"
                 
-                # Fazer backup se já existir
-                backup_file "$target"
+                # Fazer backup se já existir e depois remover o original
+                if [[ -e "$target" ]]; then
+                    backup_file "$target"
+                    rm -rf "$target"  # Remove o arquivo/diretório original
+                fi
                 
                 if cp -r "$item" "$target"; then
                     log "INFO" "Copiado: $basename_item -> ~/.config/"
@@ -367,6 +370,22 @@ setup_dotfiles() {
         log "ERROR" "Diretório config não encontrado em: $config_source"
         log "ERROR" "Certifique-se de que a pasta 'config' está no mesmo diretório do script"
         handle_error "setup_dotfiles" "Pasta config não encontrada"
+    fi
+}
+
+# Backup corrigido
+backup_file() {
+    local file="$1"
+    
+    if [[ -e "$file" ]]; then
+        local backup_name="${file}.backup.$(date +%Y%m%d_%H%M%S)"
+        log "INFO" "Criando backup: $file -> $backup_name"
+        
+        if cp -r "$file" "$backup_name"; then
+            log "INFO" "Backup criado com sucesso: $backup_name"
+        else
+            log "WARN" "Falha ao criar backup de: $file"
+        fi
     fi
 }
 
