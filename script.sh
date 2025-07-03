@@ -339,23 +339,15 @@ setup_dotfiles() {
     # Verificar se o diretório config existe no diretório do script
     if [[ -d "$config_source" ]]; then
         log "INFO" "Diretório config encontrado em: $config_source"
-        moving_dotfiles "$config_source"
-    else
-        log "ERROR" "Diretório config não encontrado em: $config_source"
-        log "ERROR" "Certifique-se de que a pasta 'config' está no mesmo diretório do script"
-        handle_error "setup_dotfiles" "Pasta config não encontrada"
-    fi
-
-        local config_dir="$1"
-    
-    log "INFO" "Movendo arquivos de configuração..."
-    
-    # Criar diretório .config se não existir
-    mkdir -p "$HOME/.config"
-    
-    # Mover arquivos de configuração
-    if [[ -d "$config_dir" ]]; then
-        for item in "$config_dir"/*; do
+        
+        # Lógica da função moving_dotfiles integrada aqui
+        log "INFO" "Movendo arquivos de configuração..."
+        
+        # Criar diretório .config se não existir
+        mkdir -p "$HOME/.config"
+        
+        # Mover arquivos de configuração
+        for item in "$config_source"/*; do
             if [[ -e "$item" ]]; then
                 local basename_item=$(basename "$item")
                 local target="$HOME/.config/$basename_item"
@@ -372,7 +364,9 @@ setup_dotfiles() {
         done
         log "INFO" "Arquivos de configuração movidos com sucesso"
     else
-        log "ERROR" "Diretório de configuração não encontrado: $config_dir"
+        log "ERROR" "Diretório config não encontrado em: $config_source"
+        log "ERROR" "Certifique-se de que a pasta 'config' está no mesmo diretório do script"
+        handle_error "setup_dotfiles" "Pasta config não encontrada"
     fi
 }
 
