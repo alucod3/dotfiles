@@ -320,6 +320,57 @@ setup_git_config() {
 }
 
 # =============================================================================
+# TRANSFERINDO .CONFIG
+# =============================================================================
+
+setup_dotfiles() {
+    log "INFO" "Configurando dotfiles..."
+
+    # Diretório onde está o script (pasta atual)
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local config_source="$script_dir/config"
+    
+    # Verificar se o diretório config existe no diretório do script
+    if [[ -d "$config_source" ]]; then
+        log "INFO" "Diretório config encontrado em: $config_source"
+        moving_dotfiles "$config_source"
+    else
+        log "ERROR" "Diretório config não encontrado em: $config_source"
+        log "ERROR" "Certifique-se de que a pasta 'config' está no mesmo diretório do script"
+        handle_error "setup_dotfiles" "Pasta config não encontrada"
+    fi
+
+        local config_dir="$1"
+    
+    log "INFO" "Movendo arquivos de configuração..."
+    
+    # Criar diretório .config se não existir
+    mkdir -p "$HOME/.config"
+    
+    # Mover arquivos de configuração
+    if [[ -d "$config_dir" ]]; then
+        for item in "$config_dir"/*; do
+            if [[ -e "$item" ]]; then
+                local basename_item=$(basename "$item")
+                local target="$HOME/.config/$basename_item"
+                
+                # Fazer backup se já existir
+                backup_file "$target"
+                
+                if cp -r "$item" "$target"; then
+                    log "INFO" "Copiado: $basename_item -> ~/.config/"
+                else
+                    log "WARN" "Falha ao copiar: $basename_item"
+                fi
+            fi
+        done
+        log "INFO" "Arquivos de configuração movidos com sucesso"
+    else
+        log "ERROR" "Diretório de configuração não encontrado: $config_dir"
+    fi
+}
+
+# =============================================================================
 # FUNÇÃO PRINCIPAL
 # =============================================================================
 
@@ -352,14 +403,6 @@ show_summary() {
     fi
 }
 
-# =============================================================================
-# PARTE PARA COPIAR OS .CONFIG PARA O SISTEMA (ALTERAR AQUI)
-# =============================================================================
-moving_config() {
-    log "INFO" "Instalando .config"
-    mv ./config/* ~/.config/
-}
-
 main() {
     log "INFO" "=== INICIANDO CONFIGURAÇÃO DE DOTFILES ==="
     log "INFO" "Arch Linux Dotfiles Installer v2.0"
@@ -385,9 +428,8 @@ main() {
     install_gui_applications
     setup_zsh
     setup_neovim
-    setup_dotfiles
     setup_git_config
-    moving_config
+    setup_dotfiles
     
     show_summary
     
