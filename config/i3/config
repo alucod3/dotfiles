@@ -63,8 +63,20 @@ tiling_drag modifier titlebar
 # start a terminal
 bindsym $mod+Return exec kitty
 
+# start firefox
+bindsym $mod+Shift+W exec firefox
+
 # kill focused window
 bindsym $mod+Shift+q kill
+
+# Flameshot - captura de tela
+bindsym Print exec --no-startup-id flameshot gui
+bindsym $mod+Print exec --no-startup-id flameshot full -p ~/Pictures/Screenshots
+bindsym $mod+Shift+Print exec --no-startup-id flameshot screen -p ~/Pictures/Screenshots
+bindsym $mod+ctrl+Print exec --no-startup-id flameshot launcher
+
+# Iniciar o daemon do flameshot na inicialização
+exec --no-startup-id flameshot
 
 # start dmenu (a program launcher)
 bindsym $mod+d exec --no-startup-id dmenu_run
